@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-app
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: java-app
+  template:
+    metadata:
+      labels: 
+        app: java-app
+    spec:
+      containers:
+        - name: java-app-container
+          image: techiescamp/kube-petclinic-app:3.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-cred
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: mysql-cred
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "200m"
+          volumeMounts:
+            - name: java-app-config
+              mountPath: /opt/config
+          command: ["java", "-jar", "/app/java.jar", "--spring.config.location=/opt/config/application.properties", "--spring.profiles.active=mysql"]
+          statusProbe:
+            livenessProbe:
+              httpGet:
+                path: /actuator/health
+                port: 8080
+              failureThreshold: 30
+              periodSeconds: 20
+              intialDelaySeconds: 30
+            readinessProbe:
+              httpGet:
+                path: /actuator/health/readiness
+                port: 8080
+              failureThreshold: 3
+              periodSeconds: 20
+              timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 15
+            failureThreshold: 3
+            timeoutSeconds: 10
+      volumes:
+        - name: java-app-config
+          configMap:
+            name: java-app-config
+        
+
+
+
