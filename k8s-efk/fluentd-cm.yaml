@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-cm
+  namespace: kube-logging
+data:
+  fluentd-host: "elasticsearch.kube-logging.svc.cluster.local"
+  fluentd-port: "9200"
+  fluentd-es-scheme: "http"
+  fluentd-systemd-config: disable
